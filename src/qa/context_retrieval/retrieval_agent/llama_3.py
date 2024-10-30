@@ -9,7 +9,7 @@ load_dotenv()
 class LlamaQueryRetriever(AgentBase):
     def __init__(self, api_key):
         super().__init__(api_key)
-        self.api_url = os.getenv("OLLAMA_PATH")
+        self.api_url = api_key
         self.ollama_model = "llama3.2"
 
     def get_query(self, user_question):

@@ -1,10 +1,11 @@
 import pandas as pd
 import logging
-from retrieval_agent.my_cohere import CohereQueryRetriever
-from retrieval_agent.llama_3 import LlamaQueryRetriever
-from retrieval_agent.gemini_flash import GeminiQueryRetriever
-from post_processing.query_extractor import extract_query
-from post_processing.query_executor import run_query
+from qa.context_retrieval.retrieval_agent.my_cohere import CohereQueryRetriever
+from qa.context_retrieval.retrieval_agent.llama_3 import LlamaQueryRetriever
+from qa.context_retrieval.retrieval_agent.gemini_flash import GeminiQueryRetriever
+from qa.context_retrieval.post_processing.query_extractor import extract_query
+from qa.context_retrieval.post_processing.query_executor import run_query
+
 import os
 from dotenv import load_dotenv
 
@@ -16,7 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 def retrieve_and_execute_pipeline(user_question, agent_type="cohere"):
     # Initialize the appropriate agent based on agent_type
-    api_key = os.getenv("COHERE_API") if agent_type == "cohere" else os.getenv("GEMINI_API") if agent_type == "gemini" else os.getenv("LLAMA_API")
+    api_key = os.getenv("COHERE_API") if agent_type == "cohere" else os.getenv("GEMINI_API_KEY") if agent_type == "gemini" else os.getenv("LLAMA_API")
     
     if agent_type == "cohere":
         retriever = CohereQueryRetriever(api_key=api_key)

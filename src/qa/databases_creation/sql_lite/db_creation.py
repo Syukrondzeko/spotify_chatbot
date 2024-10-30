@@ -37,6 +37,7 @@ cursor = conn.cursor()
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS user_review (
         pseudo_author_id TEXT,
+        review_id TEXT,
         author_name TEXT,
         review_text TEXT,
         review_rating INTEGER,

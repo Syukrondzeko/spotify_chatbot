@@ -10,7 +10,7 @@ class AgentBase:
         Columns: review_id, pseudo_author_id, author_name, review_text, review_rating, review_likes, year, month, date
         Example values: 14a011a8-7544-47b4-8480-c502af0ac26f, 152618553977019693742, "A Google user", "Use it every day", 5, 1, 2014, 5, 27
 
-        Instructions: Build a query based on user question. Identify the relevant only essential columns to retrieve and apply only essential filters. Then, provide directly the one best SQL Lite query in backticks. Use a simple query, avoiding any complex structures, and don't use any table or columns outside those mentioned above. Don't add limit if it is not mentioned in the question.
+        Instructions: Build a query based on user question. Identify the relevant and only essential columns to retrieve and apply only essential filters. Then, provide directly the one best SQL Lite query in backticks to answer the question. Use a simple query, avoiding any complex structures, and don't use any table or columns outside those mentioned above. Don't add limit if it is not mentioned in the question.
         """
 
     def build_relax_query(self, user_question, previous_query):
@@ -28,7 +28,7 @@ class AgentBase:
         And you provided this query based on the question: {query}
         However, I encountered this error: {error}
 
-        Please fix the query to address the error and provide the correct version.
+        Please fix the query to address the error and provide the correct version. Don't add limit if it is not mentioned in the question.
         """
 
     def get_query(self, user_question):

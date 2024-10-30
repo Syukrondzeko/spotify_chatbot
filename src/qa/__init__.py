@@ -1,1 +1,1 @@
-from .qa_pipeline import qa_pipelines
+from .qa_sql_pipeline import qa_sql_pipelines

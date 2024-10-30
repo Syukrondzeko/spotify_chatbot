@@ -1,10 +1,10 @@
 import pandas as pd
 import logging
-from qa.context_retrieval.retrieval_agent.my_cohere import CohereQueryRetriever
-from qa.context_retrieval.retrieval_agent.llama_3 import LlamaQueryRetriever
-from qa.context_retrieval.retrieval_agent.gemini_flash import GeminiQueryRetriever
-from qa.context_retrieval.post_processing.query_extractor import extract_query
-from qa.context_retrieval.post_processing.query_executor import run_query
+from qa.context_retrieval.sql.retrieval_agent.my_cohere import CohereQueryRetriever
+from qa.context_retrieval.sql.retrieval_agent.llama_3 import LlamaQueryRetriever
+from qa.context_retrieval.sql.retrieval_agent.gemini_flash import GeminiQueryRetriever
+from qa.context_retrieval.sql.post_processing.query_extractor import extract_query
+from qa.context_retrieval.sql.post_processing.query_executor import run_query
 
 import os
 from dotenv import load_dotenv

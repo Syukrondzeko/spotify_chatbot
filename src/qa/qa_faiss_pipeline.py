@@ -1,17 +1,20 @@
+# qa/qa_faiss_pipeline.py
+
 import os
 import logging
 import pandas as pd
+import json
 from dotenv import load_dotenv
 import requests
 import cohere
 import google.generativeai as genai
-from qa.context_retrieval.retrieval_pipeline import retrieve_and_execute_pipeline
+from qa.context_retrieval.faiss.faiss_agent import search_similar_sentences
 
 # Load environment variables
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 COHERE_API_KEY = os.getenv("COHERE_API_KEY")
-LLAMA_API_KEY = os.getenv("LLAMA_API_KEY")
+LLAMA_API = os.getenv("LLAMA_API")
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -20,6 +23,32 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 genai.configure(api_key=GEMINI_API_KEY)
 gemini_model = genai.GenerativeModel("gemini-1.5-flash")
 cohere_client = cohere.ClientV2(api_key=COHERE_API_KEY)
+
+def _send_request(payload, headers):
+    """
+    Sends a request to the Llama API and processes the streaming response.
+
+    Parameters:
+    - payload (dict): The request payload.
+    - headers (dict): The headers for the request.
+
+    Returns:
+    - str: The combined response text from the streaming output.
+    """
+    response = requests.post(LLAMA_API, json=payload, headers=headers, stream=True)
+    if response.status_code == 200:
+        query_result = ""
+        for line in response.iter_lines():
+            if line:
+                try:
+                    line_data = json.loads(line.decode("utf-8"))
+                    query_result += line_data.get("response", "")
+                except json.JSONDecodeError:
+                    logging.warning("Could not decode line as JSON")
+        return query_result
+    else:
+        logging.error(f"Error: {response.status_code}")
+        return None
 
 def generate_response(agent_type: str, prompt: str) -> str:
     """
@@ -36,19 +65,19 @@ def generate_response(agent_type: str, prompt: str) -> str:
         response = cohere_client.chat(model="command-r-plus-08-2024", messages=[{"role": "user", "content": prompt}])
         return response.message.content[0].text if response.message else None
     elif agent_type == "llama":
-        headers = {"Authorization": f"Bearer {LLAMA_API_KEY}"}
-        data = {"prompt": prompt, "max_tokens": 100}
-        response = requests.post("https://api.llama.ai/v1/generate", json=data, headers=headers)
-        return response.json().get("text") if response.ok else None
+        # Define the payload and headers for the Llama API request
+        payload = {"model": "llama3.2", "prompt": prompt}
+        headers = {"Content-Type": "application/json"}
+        return _send_request(payload, headers)
     elif agent_type == "gemini":
         response = gemini_model.generate_content(prompt)
         return response.text if response else None
     else:
         raise ValueError(f"Unsupported agent type: {agent_type}")
 
-def qa_pipelines(user_question: str, agent_type: str = "cohere") -> str:
+def qa_faiss_pipelines(user_question: str, agent_type: str = "cohere") -> str:
     """
-    Retrieves SQL context and generates a response with the specified model.
+    Retrieves FAISS context and generates a response with the specified model.
 
     Parameters:
     - user_question (str): User's question.
@@ -57,14 +86,14 @@ def qa_pipelines(user_question: str, agent_type: str = "cohere") -> str:
     Returns:
     - str: Generated answer or None if no answer.
     """
-    logging.info("Retrieving SQL context for the question.")
-    context_from_sql = retrieve_and_execute_pipeline(user_question, agent_type)
+    logging.info("Retrieving context from FAISS for the question.")
+    context_from_faiss = search_similar_sentences(user_question)
 
-    if context_from_sql is None:
+    if not context_from_faiss:
         logging.warning("No context found.")
         return None
 
-    context_text = context_from_sql.to_string(index=False) if isinstance(context_from_sql, pd.DataFrame) else str(context_from_sql)
+    context_text = "\n".join(context_from_faiss)
     logging.info("Context retrieved and formatted.")
 
     prompt = f"Using the following context:\nContext: {context_text}\nAnswer the question:\nQuestion: {user_question}"
@@ -75,7 +104,7 @@ def qa_pipelines(user_question: str, agent_type: str = "cohere") -> str:
 
 # Example usage
 if __name__ == "__main__":
-    question = "How many comments for each month in 2014?"
-    agent = "cohere"  # Options: "cohere", "llama", "gemini"
-    answer = qa_pipelines(question, agent_type=agent)
+    question = "What is the best feature in Spotify?"
+    agent = "llama"  # Options: "cohere", "llama", "gemini"
+    answer = qa_faiss_pipelines(question, agent_type=agent)
     print("Answer:", answer if answer else "No answer generated.")

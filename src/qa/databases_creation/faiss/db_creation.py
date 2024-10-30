@@ -35,21 +35,32 @@ def load_all_embeddings(directory_path):
     logging.info("All embeddings loaded into DataFrame")
     return df
 
-def create_faiss_index_and_save_metadata(df, index_path, metadata_path):
+def create_partitioned_faiss_index_and_save_metadata(df, index_path, metadata_path, nlist=100):
     # Prepare embeddings and normalize them
     logging.info("Preparing embeddings and normalizing for FAISS")
     embeddings = np.array(df['embedding'].tolist()).astype('float32')
     faiss.normalize_L2(embeddings)  # Normalize for cosine similarity
 
-    # Create and populate FAISS index
-    logging.info("Creating FAISS index")
+    # Define the dimension of embeddings
     d = embeddings.shape[1]
-    index = faiss.IndexFlatIP(d)
+    
+    # Create an IVF index with partitioning
+    logging.info(f"Creating partitioned FAISS IVF index with {nlist} clusters")
+    quantizer = faiss.IndexFlatIP(d)  # Quantizer used to find clusters
+    index = faiss.IndexIVFFlat(quantizer, d, nlist, faiss.METRIC_INNER_PRODUCT)
+
+    # Train the index with a subset of embeddings (required for IVF)
+    logging.info("Training FAISS index on embeddings")
+    index.train(embeddings)
+    logging.info("Index training completed")
+
+    # Add embeddings to the index
     index.add(embeddings)
+    logging.info("Embeddings added to the FAISS index")
     
     # Save FAISS index
     faiss.write_index(index, index_path)
-    logging.info(f"FAISS index saved at {index_path}")
+    logging.info(f"Partitioned FAISS index saved at {index_path}")
     
     # Save metadata (text and ID) for later retrieval
     metadata = df[['id', 'text']].to_dict(orient='records')
@@ -57,8 +68,7 @@ def create_faiss_index_and_save_metadata(df, index_path, metadata_path):
         json.dump(metadata, f)
     logging.info(f"Metadata saved at {metadata_path}")
 
-
-# Load data, create index, and save metadata
+# Load data, create partitioned index, and save metadata
 df = load_all_embeddings(EMBEDDING_VECTOR_PATH)
-create_faiss_index_and_save_metadata(df, FAISS_PATH, METADATA_FAISS_PATH)
-logging.info("FAISS index and metadata saved successfully.")
+create_partitioned_faiss_index_and_save_metadata(df, FAISS_PATH, METADATA_FAISS_PATH, nlist=100)
+logging.info("Partitioned FAISS index and metadata saved successfully.")

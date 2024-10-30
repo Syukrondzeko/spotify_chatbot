@@ -1,59 +1,40 @@
-import os
 import requests
-import json  # Import json directly
+import json
 from dotenv import load_dotenv
+from .agent_base import AgentBase
+import os
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Set the Ollama API base URL
-ollama_api_url = os.getenv("OLLAMA_PATH")
+class LlamaQueryRetriever(AgentBase):
+    def __init__(self, api_key):
+        super().__init__(api_key)
+        self.api_url = os.getenv("OLLAMA_PATH")
 
-def get_query_from_llama(user_question):
-    # Prompt template
-    prompt = f"""
-    Question: {user_question}
+    def get_query(self, user_question):
+        prompt = self.build_query(user_question)
+        payload = {"model": "llama3.1", "prompt": prompt}
+        headers = {"Content-Type": "application/json"}
+        return self._send_request(payload, headers)
 
-    Table: 'user_review'
-    Columns: review_id, pseudo_author_id, author_name, review_text, review_rating, review_likes, year, month, day
+    def get_relax_query(self, user_question, previous_query):
+        prompt = self.build_relax_query(user_question, previous_query)
+        payload = {"model": "llama3.1", "prompt": prompt}
+        headers = {"Content-Type": "application/json"}
+        return self._send_request(payload, headers)
 
-    Instructions: Identify the relevant only essential columns to retrieve and apply only essential filters. Then, provide the SQL query in backticks. Use a simple query, avoiding any complex structures. I will copy paste that query, so make sure it is executable without any need to manual replacement in the query. I use sqlite
-    """
-
-    # Payload for the Ollama API
-    payload = {
-        "model": "llama3.1",
-        "prompt": prompt
-    }
-
-    # Set headers if any authentication is required
-    headers = {
-        "Content-Type": "application/json"
-    }
-
-    # Make the API request with stream enabled
-    response = requests.post(ollama_api_url, json=payload, headers=headers, stream=True)
-
-    # Check for successful response
-    if response.status_code == 200:
-        query_result = ""
-        # Read each line in the streamed response
-        for line in response.iter_lines():
-            if line:
-                # Decode each line to JSON, using the standard json library
-                try:
-                    line_data = json.loads(line.decode("utf-8"))
-                    query_result += line_data.get("response", "")
-                except json.JSONDecodeError:
-                    print("Warning: Could not decode line as JSON")
-        
-        # Output the final accumulated SQL query
-        print("Generated SQL Query:", query_result)
-        return query_result
-    else:
-        print(f"Error: {response.status_code}, {response.text}")
-        return None
-
-if __name__ == "__main__":
-    user_question = "In comparison to our application, which music streaming platform are users most likely to compare ours with?"
-    get_query_from_llama(user_question)
+    def _send_request(self, payload, headers):
+        response = requests.post(self.api_url, json=payload, headers=headers, stream=True)
+        if response.status_code == 200:
+            query_result = ""
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        line_data = json.loads(line.decode("utf-8"))
+                        query_result += line_data.get("response", "")
+                    except json.JSONDecodeError:
+                        print("Warning: Could not decode line as JSON")
+            return query_result
+        else:
+            print(f"Error: {response.status_code}")
+            return None

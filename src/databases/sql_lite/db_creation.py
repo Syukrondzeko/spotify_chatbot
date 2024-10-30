@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get database and CSV file paths from .env file
-database_path = os.getenv("DATABASE_PATH")
+database_path = os.getenv("SQLITE_PATH")
 csv_file_path = os.getenv("DATASET_PATH")
 
 # Load the CSV data

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get the database path from the .env file
-database_path = os.getenv("DATABASE_PATH")
+database_path = os.getenv("SQLITE_PATH")
 
 def run_query(query):
     """

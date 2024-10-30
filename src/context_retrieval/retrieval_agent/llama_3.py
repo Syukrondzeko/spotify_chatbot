@@ -10,22 +10,23 @@ class LlamaQueryRetriever(AgentBase):
     def __init__(self, api_key):
         super().__init__(api_key)
         self.api_url = os.getenv("OLLAMA_PATH")
+        self.ollama_model = "llama3.2"
 
     def get_query(self, user_question):
         prompt = self.build_query(user_question)
-        payload = {"model": "llama3.1", "prompt": prompt}
+        payload = {"model": self.ollama_model, "prompt": prompt}
         headers = {"Content-Type": "application/json"}
         return self._send_request(payload, headers)
 
     def get_relax_query(self, user_question, previous_query):
         prompt = self.build_relax_query(user_question, previous_query)
-        payload = {"model": "llama3.1", "prompt": prompt}
+        payload = {"model": self.ollama_model, "prompt": prompt}
         headers = {"Content-Type": "application/json"}
         return self._send_request(payload, headers)
 
     def solved_error_query(self, user_question, query, error_message):
         prompt = self.build_fixed_error_query_prompt(user_question, query, error_message)
-        payload = {"model": "llama3.1", "prompt": prompt}
+        payload = {"model": self.ollama_model, "prompt": prompt}
         headers = {"Content-Type": "application/json"}
         return self._send_request(payload, headers)
 

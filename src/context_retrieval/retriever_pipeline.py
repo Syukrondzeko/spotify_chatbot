@@ -77,6 +77,6 @@ def retrieve_and_execute_pipeline(user_question, agent_type="cohere"):
 
 # Example usage
 if __name__ == "__main__":
-    user_question = "What are the primary reasons users express dissatisfaction with Spotify?"
+    user_question = "How many comment for each month in 2014?"
     agent_type = "cohere"  # Change this to "llama" or "gemini" as needed
     retrieve_and_execute_pipeline(user_question, agent_type)

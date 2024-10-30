@@ -1,4 +1,5 @@
 import pandas as pd
+import logging
 from retrieval_agent.my_cohere import CohereQueryRetriever
 from retrieval_agent.llama_3 import LlamaQueryRetriever
 from retrieval_agent.gemini_flash import GeminiQueryRetriever
@@ -9,6 +10,9 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def retrieve_and_execute_pipeline(user_question, agent_type="cohere"):
     # Initialize the appropriate agent based on agent_type
@@ -25,38 +29,54 @@ def retrieve_and_execute_pipeline(user_question, agent_type="cohere"):
 
     # Step 1: Get raw output from agent
     raw_response = retriever.get_query(user_question)
-    print("Step 1 - Raw Output from Agent Retriever:\n", raw_response)
+    logging.info("Step 1 - Raw Output from Agent Retriever:\n%s", raw_response)
 
     # Step 2: Clean SQL extraction
     clean_query = extract_query(raw_response)
-    print("Step 2 - Clean SQL Query:\n", clean_query)
+    logging.info("Step 2 - Clean SQL Query:\n%s", clean_query)
 
     # Step 3: Run the query and retrieve data
     if clean_query:
-        results_df = run_query(clean_query)
-        print("Step 3 - Data Retrieved:\n", results_df)
+        query_result = run_query(clean_query)
 
-        # Check if data is empty; if so, retrieve a relaxed query
-        results_df = pd.DataFrame()  # Simulate empty result
-        if results_df.empty:
-            print("No results found. Attempting a relaxed query.")
+        if isinstance(query_result, pd.DataFrame):
+            logging.info("Step 3 - Data Retrieved:\n%s", query_result)
+            # Check if data is empty; if so, retrieve a relaxed query
+            if query_result.empty:
+                logging.warning("No results found. Attempting a relaxed query.")
 
-            # Get a more relaxed query based on the previous query
-            relaxed_query_response = retriever.get_relax_query(user_question, clean_query)
-            relaxed_query = extract_query(relaxed_query_response)
-            print("Relaxed SQL Query:\n", relaxed_query)
+                # Get a more relaxed query based on the previous query
+                relaxed_query_response = retriever.get_relax_query(user_question, clean_query)
+                relaxed_query = extract_query(relaxed_query_response)
+                logging.info("Relaxed SQL Query:\n%s", relaxed_query)
 
-            # Execute the relaxed query if it exists
-            if relaxed_query:
-                relaxed_results_df = run_query(relaxed_query)
-                print("Step 4 - Data Retrieved from Relaxed Query:\n", relaxed_results_df)
+                # Execute the relaxed query if it exists
+                if relaxed_query:
+                    relaxed_results_df = run_query(relaxed_query)
+                    logging.info("Step 4 - Data Retrieved from Relaxed Query:\n%s", relaxed_results_df)
+                else:
+                    logging.warning("No valid relaxed SQL query was generated.")
             else:
-                print("No valid relaxed SQL query was generated.")
+                return query_result
+        else:
+            # If `query_result` is an error message, pass it to `solved_error_query`
+            logging.error("Step 3 - Error Encountered:\n%s", query_result)
+            solved_query_response = retriever.solved_error_query(user_question, clean_query, query_result)
+            solved_query = extract_query(solved_query_response)
+            logging.info("Step 4 - Resolved Query:\n%s", solved_query)
+
+            # Attempt to run the resolved query
+            if solved_query:
+                fixed_results_df = run_query(solved_query)
+                logging.info("Step 5 - Data Retrieved from Resolved Query:\n%s", fixed_results_df)
+            else:
+                logging.warning("No valid resolved SQL query was generated.")
+
     else:
-        print("No valid SQL query was extracted.")
+        logging.warning("No valid SQL query was extracted.")
 
 # Example usage
 if __name__ == "__main__":
-    user_question = "In comparison to our application, which music streaming platform are users most likely to compare ours with?"
-    agent_type = "llama"  # Change this to "llama" or "gemini" as needed
+    user_question = "What are the primary reasons users express dissatisfaction with Spotify?"
+    agent_type = "cohere"  # Change this to "llama" or "gemini" as needed
     retrieve_and_execute_pipeline(user_question, agent_type)

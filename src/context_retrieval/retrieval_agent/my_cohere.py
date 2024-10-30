@@ -18,3 +18,8 @@ class CohereQueryRetriever(AgentBase):
         prompt = self.build_relax_query(user_question, previous_query)
         response = self.client.chat(model="command-r-plus-08-2024", messages=[{"role": "user", "content": prompt}])
         return response.message.content[0].text
+
+    def solved_error_query(self, user_question, query, error_message):
+        prompt = self.build_fixed_error_query_prompt(user_question, query, error_message)
+        response = self.client.chat(model="command-r-plus-08-2024", messages=[{"role": "user", "content": prompt}])
+        return response.message.content[0].text

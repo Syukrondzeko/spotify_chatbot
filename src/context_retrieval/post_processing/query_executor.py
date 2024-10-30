@@ -12,18 +12,18 @@ database_path = os.getenv("DATABASE_PATH")
 def run_query(query):
     """
     Connects to the SQLite database, executes the given query, and returns the results in a DataFrame.
+    If an error occurs, returns the error message as a string.
     """
     if not query:
-        raise ValueError("No SQL query provided.")
+        return "No SQL query provided."
 
     conn = sqlite3.connect(database_path)
     
     try:
         df_results = pd.read_sql_query(query, conn)
+        return df_results
     except Exception as e:
-        print("Error executing query:", e)
-        df_results = pd.DataFrame()  # Return an empty DataFrame on error
+        error_message = f"Error executing query: {e}"
+        return error_message  # Return the error message instead of an empty DataFrame
     finally:
         conn.close()
-
-    return df_results

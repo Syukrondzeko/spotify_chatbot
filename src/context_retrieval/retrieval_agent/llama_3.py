@@ -23,6 +23,12 @@ class LlamaQueryRetriever(AgentBase):
         headers = {"Content-Type": "application/json"}
         return self._send_request(payload, headers)
 
+    def solved_error_query(self, user_question, query, error_message):
+        prompt = self.build_fixed_error_query_prompt(user_question, query, error_message)
+        payload = {"model": "llama3.1", "prompt": prompt}
+        headers = {"Content-Type": "application/json"}
+        return self._send_request(payload, headers)
+
     def _send_request(self, payload, headers):
         response = requests.post(self.api_url, json=payload, headers=headers, stream=True)
         if response.status_code == 200:

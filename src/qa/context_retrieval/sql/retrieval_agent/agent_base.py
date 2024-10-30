@@ -7,7 +7,7 @@ class AgentBase:
         Question: {user_question}
 
         Table: 'user_review'
-        Columns: review_id, pseudo_author_id, author_name, review_text, review_rating, review_likes, year, month, date
+        Columns: review_id, pseudo_author_id, author_name, review_text, review_rating, review_likes, year, month, day
         Example values: 14a011a8-7544-47b4-8480-c502af0ac26f, 152618553977019693742, "A Google user", "Use it every day", 5, 1, 2014, 5, 27
 
         Instructions: Build a query based on user question. Identify the relevant and only essential columns to retrieve and apply only essential filters. Then, provide directly the one best SQL Lite query in backticks to answer the question. Use a simple query, avoiding any complex structures, and don't use any table or columns outside those mentioned above. Don't add limit if it is not mentioned in the question.

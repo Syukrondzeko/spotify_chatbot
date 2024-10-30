@@ -6,6 +6,7 @@ import logging
 import os
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 EMBEDDING_VECTOR_PATH = os.getenv("EMBEDDING_VECTOR_PATH")
 FAISS_PATH = os.getenv("FAISS_PATH")
@@ -62,8 +63,8 @@ def create_partitioned_faiss_index_and_save_metadata(df, index_path, metadata_pa
     faiss.write_index(index, index_path)
     logging.info(f"Partitioned FAISS index saved at {index_path}")
     
-    # Save metadata (text and ID) for later retrieval
-    metadata = df[['id', 'text']].to_dict(orient='records')
+    # Save metadata (text, ID, rating, year, month, day) for later retrieval
+    metadata = df[['id', 'text', 'review_rating', 'year', 'month', 'day']].to_dict(orient='records')
     with open(metadata_path, "w") as f:
         json.dump(metadata, f)
     logging.info(f"Metadata saved at {metadata_path}")

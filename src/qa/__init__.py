@@ -1,1 +1,2 @@
-from .qa_sql_pipeline import qa_sql_pipelines
+from .qa_sql_pipeline import QASQLPipeline
+from .qa_faiss_pipeline import QAFaissPipeline

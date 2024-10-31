@@ -19,11 +19,12 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class RouterPipeline:
-    def __init__(self, model, faiss_index, metadata_by_id):
+    def __init__(self, model, faiss_index, metadata):
         logging.info("Initializing RouterPipeline")
         self.model = model  # Model passed in from outside
         self.faiss_index = faiss_index  # FAISS index passed in from outside
-        self.metadata_by_id = metadata_by_id  # Metadata passed in from outside
+        self.metadata = metadata
+        self.metadata_by_id = {entry['id']: entry for entry in metadata}
         logging.info("RouterPipeline initialized with model, FAISS index, and metadata.")
 
     def classify_user_question(self, user_question, agent_type="llama"):
@@ -68,7 +69,7 @@ class RouterPipeline:
         
         elif classification == "direct":
             logging.info("Routing to QAFaissPipeline for direct answer.")
-            pipeline = QAFaissPipeline(self.model, self.faiss_index, self.metadata_by_id) 
+            pipeline = QAFaissPipeline(self.model, self.faiss_index, self.metadata) 
             answer = pipeline.answer_question(question, top_k=5, nprobe=10, agent_type=agent_type)
             logging.info("Received answer from QAFaissPipeline.")
             return answer

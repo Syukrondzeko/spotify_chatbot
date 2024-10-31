@@ -1,5 +1,6 @@
 import os
 
+
 def print_directory_tree(root_dir, prefix=""):
     items = os.listdir(root_dir)
     for index, item in enumerate(items):
@@ -8,5 +9,6 @@ def print_directory_tree(root_dir, prefix=""):
         print(f"{prefix}{'└── ' if is_last else '├── '}{item}")
         if os.path.isdir(path):
             print_directory_tree(path, prefix + ("    " if is_last else "│   "))
+
 
 print_directory_tree(".")

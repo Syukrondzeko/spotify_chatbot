@@ -1,5 +1,5 @@
-import re
 import logging
+import re
 
 
 def router_question(user_question):
@@ -28,11 +28,13 @@ def post_processing_router(response):
     within backticks and returns it. If not found, defaults to "direct."
     """
     # Search for the last occurrence of "aggregate", "filter", or "direct" within backticks at the end of the response
-    match = re.search(r'`(aggregate|filter|direct)`\s*$', response.lower())
+    match = re.search(r"`(aggregate|filter|direct)`\s*$", response.lower())
 
     if match:
-        return match.group(1)  # Returns only "aggregate", "filter", or "direct" without any extra characters
-    
+        return match.group(
+            1
+        )  # Returns only "aggregate", "filter", or "direct" without any extra characters
+
     # If no valid classification term is found, log an error and default to 'direct'
     logging.error("Unexpected response format: defaulting to 'direct'")
     return "direct"  # Default to 'direct' if response is unexpected

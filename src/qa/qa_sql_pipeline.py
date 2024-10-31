@@ -1,12 +1,14 @@
+import json
 import logging
-import pandas as pd
-import requests
+import os
+
 import cohere
 import google.generativeai as genai
-import json
-from dotenv import load_dotenv
-import os
+import pandas as pd
+import requests
 import streamlit as st
+from dotenv import load_dotenv
+
 from qa.context_retrieval.retrieval_pipeline import retrieve_and_execute_pipeline
 
 # Load environment variables
@@ -21,21 +23,30 @@ gemini_model = genai.GenerativeModel("gemini-1.5-flash")
 cohere_client = cohere.ClientV2(api_key=COHERE_API_KEY)
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class QASQLPipeline:
     def retrieve_context(self, user_question: str, query_type: str, agent_type: str):
         """Retrieve context using SQL-based retrieval."""
         if query_type != "aggregating":
-            raise ValueError("Invalid query_type. Only 'aggregating' is accepted in QASQLPipeline.")
-        
+            raise ValueError(
+                "Invalid query_type. Only 'aggregating' is accepted in QASQLPipeline."
+            )
+
         return retrieve_and_execute_pipeline(user_question, query_type, agent_type)
 
-    def answer_question(self, user_question: str, query_type: str, agent_type: str = "cohere") -> str:
+    def answer_question(
+        self, user_question: str, query_type: str, agent_type: str = "cohere"
+    ) -> str:
         """Retrieves SQL context and generates a response."""
         st.write("Step 1: Retrieving context from SQL database...")
         logging.info("Retrieving context for the question using SQL.")
-        sql_query, context = self.retrieve_context(user_question, query_type, agent_type)
+        sql_query, context = self.retrieve_context(
+            user_question, query_type, agent_type
+        )
 
         if context is None or (isinstance(context, pd.DataFrame) and context.empty):
             logging.warning("No context found.")
@@ -43,7 +54,11 @@ class QASQLPipeline:
 
         # Format context based on type: DataFrame to string if SQL-based
         st.write("Step 2: Formatting retrieved context for response generation...")
-        context_text = context.to_string(index=False) if isinstance(context, pd.DataFrame) else str(context)
+        context_text = (
+            context.to_string(index=False)
+            if isinstance(context, pd.DataFrame)
+            else str(context)
+        )
         logging.info("SQL context retrieved and formatted.")
 
         prompt = f"""From this query:\n{sql_query}\n
@@ -59,7 +74,10 @@ class QASQLPipeline:
     def generate_response(self, agent_type: str, prompt: str) -> str:
         """Generates a response based on the agent type and prompt."""
         if agent_type == "cohere":
-            response = cohere_client.chat(model="command-r-plus-08-2024", messages=[{"role": "user", "content": prompt}])
+            response = cohere_client.chat(
+                model="command-r-plus-08-2024",
+                messages=[{"role": "user", "content": prompt}],
+            )
             return response.message.content[0].text if response.message else None
         elif agent_type == "llama":
             # Send request to Llama API

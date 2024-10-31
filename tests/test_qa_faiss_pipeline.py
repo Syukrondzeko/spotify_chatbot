@@ -1,5 +1,3 @@
-# tests/test_qa_faiss_pipeline.py
-
 import sys
 import os
 import logging

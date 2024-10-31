@@ -1,6 +1,7 @@
-import pandas as pd
-import sqlite3
 import os
+import sqlite3
+
+import pandas as pd
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -8,6 +9,7 @@ load_dotenv()
 
 # Get the database path from the .env file
 database_path = os.getenv("SQLITE_PATH")
+
 
 def run_query(query):
     """
@@ -18,7 +20,7 @@ def run_query(query):
         return "No SQL query provided."
 
     conn = sqlite3.connect(database_path)
-    
+
     try:
         df_results = pd.read_sql_query(query, conn)
         return df_results

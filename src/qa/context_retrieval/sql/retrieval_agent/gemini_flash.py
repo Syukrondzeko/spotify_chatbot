@@ -1,18 +1,20 @@
 import requests
 from dotenv import load_dotenv
+
 from .agent_base import AgentBase
 
 load_dotenv()
 
+
 class GeminiQueryRetriever(AgentBase):
     def __init__(self, api_key):
         super().__init__(api_key)
-        self.api_url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}'
+        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
 
     def get_query(self, user_question, query_type):
-        if query_type == 'filtering':
+        if query_type == "filtering":
             prompt = self.build_filter_query(user_question)
-        elif query_type == 'aggregating':
+        elif query_type == "aggregating":
             prompt = self.build_aggregate_query(user_question)
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         headers = {"Content-Type": "application/json"}
@@ -25,7 +27,9 @@ class GeminiQueryRetriever(AgentBase):
         return self._send_request(payload, headers)
 
     def solved_error_query(self, user_question, query, error_message):
-        prompt = self.build_fixed_error_query_prompt(user_question, query, error_message)
+        prompt = self.build_fixed_error_query_prompt(
+            user_question, query, error_message
+        )
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         headers = {"Content-Type": "application/json"}
         return self._send_request(payload, headers)
@@ -33,7 +37,13 @@ class GeminiQueryRetriever(AgentBase):
     def _send_request(self, payload, headers):
         response = requests.post(self.api_url, json=payload, headers=headers)
         if response.status_code == 200:
-            result_text = response.json().get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+            result_text = (
+                response.json()
+                .get("candidates", [{}])[0]
+                .get("content", {})
+                .get("parts", [{}])[0]
+                .get("text", "")
+            )
             return result_text
         else:
             print(f"Error: {response.status_code}")

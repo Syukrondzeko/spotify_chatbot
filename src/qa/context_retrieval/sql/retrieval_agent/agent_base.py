@@ -12,7 +12,7 @@ class AgentBase:
 
         Instructions: Build a query based on user question. Identify the relevant and only essential columns to retrieve and apply only essential filters. Then, provide directly the one best SQL Lite query in backticks (strictly inside backticks) to answer the question. Use a simple query, avoiding any complex structures, and don't use any table or columns outside those mentioned above. Don't add limit if it is not mentioned in the question.
         """
-    
+
     def build_filter_query(self, user_question):
         return f"""
         Question: {user_question}

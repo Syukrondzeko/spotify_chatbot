@@ -31,6 +31,8 @@ Gemini and Cohere are accessed via API for quick inference, while LLaMA 3.2, a m
 
 User questions are processed through a `qa_router_pipeline` that directs queries to one of three specialized branches: **Direct Answer**, **Filter**, or **Aggregate**.
 
+![Chatbot Architecture Diagram](images/chatbot_architecture.png)
+
 ### 1. Direct Answer Pipeline
 This pipeline handles questions that can be answered directly by the LLM without additional filtering or aggregation. For example:
 - **Example Question**: "Which music streaming platform do users compare ours with the most?"

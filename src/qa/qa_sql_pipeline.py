@@ -6,6 +6,7 @@ import google.generativeai as genai
 import json
 from dotenv import load_dotenv
 import os
+import streamlit as st
 from qa.context_retrieval.retrieval_pipeline import retrieve_and_execute_pipeline
 
 # Load environment variables
@@ -32,6 +33,7 @@ class QASQLPipeline:
 
     def answer_question(self, user_question: str, query_type: str, agent_type: str = "cohere") -> str:
         """Retrieves SQL context and generates a response."""
+        st.write("Step 1: Retrieving context from SQL database...")
         logging.info("Retrieving context for the question using SQL.")
         sql_query, context = self.retrieve_context(user_question, query_type, agent_type)
 
@@ -40,6 +42,7 @@ class QASQLPipeline:
             return None
 
         # Format context based on type: DataFrame to string if SQL-based
+        st.write("Step 2: Formatting retrieved context for response generation...")
         context_text = context.to_string(index=False) if isinstance(context, pd.DataFrame) else str(context)
         logging.info("SQL context retrieved and formatted.")
 
@@ -49,6 +52,7 @@ class QASQLPipeline:
         """
         logging.info("Prompt generated:\n%s", prompt)
 
+        st.write("Step 3: Prompt generated. Generating response...")
         response = self.generate_response(agent_type, prompt)
         return response
 

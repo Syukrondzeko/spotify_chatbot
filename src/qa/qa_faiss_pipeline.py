@@ -6,6 +6,7 @@ import cohere
 import os
 import google.generativeai as genai
 import json
+import streamlit as st
 from qa.context_retrieval.faiss.faiss_agent import FaissAgent
 
 # Configure logging
@@ -19,9 +20,9 @@ class QAFaissPipeline:
         self.metadata = metadata
         logging.info("QAFaissPipeline initialized successfully.")
 
-    def retrieve_context(self, user_question: str, top_k:int, nprobe:int):
+    def retrieve_context(self, user_question: str, top_k: int, nprobe: int):
         """Retrieve context using FAISS-based retrieval."""
-        return self.faiss_agent.search_similar_sentences(
+        context = self.faiss_agent.search_similar_sentences(
             user_question=user_question,
             model=self.model,
             index=self.index,
@@ -29,22 +30,25 @@ class QAFaissPipeline:
             top_k=top_k,
             nprobe=nprobe
         )
+        return context
 
-    def answer_question(self, user_question: str, top_k:int =5, nprobe:int = 10, agent_type: str = "cohere") -> str:
+    def answer_question(self, user_question: str, top_k: int = 5, nprobe: int = 10, agent_type: str = "cohere") -> str:
         """Retrieves FAISS context and generates a response."""
-        logging.info("Retrieving context for the question using FAISS.")
+        st.write("Step 1: Retrieving relevant context from FAISS index...")
         context = self.retrieve_context(user_question, top_k, nprobe)
 
         if not context:
             logging.warning("No context found.")
+            st.warning("No relevant context was found.")
             return None
 
         # Join list context for FAISS with newline for prompt formatting
         context_text = "\n".join(context)
         logging.info("FAISS context retrieved and formatted.")
 
-        prompt = f"Using the following context:\nContext: {context_text}\nAnswer this question for our spotify management team:\nQuestion: {user_question}"
+        prompt = f"Using the following context:\nContext: {context_text}\nAnswer this question for our Spotify management team:\nQuestion: {user_question}"
         logging.info("Prompt generated:\n%s", prompt)
+        st.write("Step 2: Generating response...")
 
         response = self.generate_response(agent_type, prompt)
         return response

@@ -40,8 +40,12 @@ def load_resources():
 router_pipeline = load_resources()
 
 # Streamlit App UI
-st.title("Q&A with RouterPipeline")
-st.write("Enter a question, and the RouterPipeline will find the best answer.")
+st.sidebar.image("https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_CMYK_Green.png", width=200)
+st.sidebar.title("Spotify Bot")
+st.sidebar.write("Ask questions about Spotify's user feedback and insights.")
+
+st.title("Spotify Bot Q&A")
+st.write("Enter a question, and the Spotify Bot will find the best answer for you.")
 
 # Input box for the user's question
 question = st.text_input("Your Question", "")
@@ -49,18 +53,24 @@ question = st.text_input("Your Question", "")
 # Dropdown for selecting the agent type
 agent_type = st.selectbox("Select Agent Type", ["cohere", "llama", "gemini"])
 
+# Initialize the session state for the answer
+if "answer" not in st.session_state:
+    st.session_state["answer"] = ""
+
 # Process the question when the user clicks the button
 if st.button("Get Answer"):
     if question.strip():
         logging.info(f"Processing question: '{question}' with agent: {agent_type}")
         
         # Route the question through RouterPipeline
-        answer = router_pipeline.route_question(question, agent_type)
-        
-        # Display the answer
-        if answer:
-            st.write("**Answer:**", answer)
-        else:
-            st.write("No answer generated for your question.")
+        st.session_state["answer"] = router_pipeline.route_question(question, agent_type)
     else:
         st.warning("Please enter a question.")
+
+# Display the answer if it's available
+if st.session_state["answer"]:
+    st.write("**Answer:**", st.session_state["answer"])
+
+# Button to clear the answer without reloading the page
+if st.button("Clear Answer"):
+    st.session_state["answer"] = ""

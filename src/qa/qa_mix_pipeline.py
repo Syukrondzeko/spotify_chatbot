@@ -11,6 +11,7 @@ import json
 import os
 from dotenv import load_dotenv
 from qa.context_retrieval.retrieval_pipeline import retrieve_and_execute_pipeline
+import streamlit as st
 
 # Load environment variables
 load_dotenv()
@@ -45,26 +46,29 @@ class QAMixPipeline:
         if query_type != "filtering":
             raise ValueError("Invalid query_type. Only 'filtering' is accepted in QAMixPipeline.")
         
-        # This function should call retrieve_and_execute_pipeline, assuming it’s defined elsewhere.
         return retrieve_and_execute_pipeline(user_question, query_type, agent_type)
 
     def answer_question(self, user_question: str, query_type: str, agent_type: str = "cohere", top_k: int = 5):
         """Retrieves SQL context, filters FAISS embeddings, performs similarity search, and generates a response."""
+        
+        st.write("Step 1: Retrieving context from database...")
         sql_query, context = self.retrieve_context(user_question, query_type, agent_type)
         logging.info(f"Retrieving context for the question using SQL:\n{sql_query}")
 
         if context is None or (isinstance(context, pd.DataFrame) and context.empty):
             logging.warning("No context found.")
-            print("No context found.")
+            st.warning("No context found.")
             return
         
         logging.info(f"Context:\n{context}")
 
         # Embed the user question
+        st.write("Step 2: Generating question embedding...")
         question_embedding = self.model.encode(user_question).astype('float32').reshape(1, -1)
         faiss.normalize_L2(question_embedding)
 
         # Filter FAISS indices to only include those in context and retrieve relevant embeddings
+        st.write("Step 3: Filtering relevant entries...")
         context_ids = set(context['id'])
         filtered_embeddings = []
         metadata_map = []
@@ -77,9 +81,10 @@ class QAMixPipeline:
                 metadata_map.append(metadata_entry)
 
         if not filtered_embeddings:
-            print("No embeddings found for the retrieved IDs.")
+            st.warning("No embeddings found for the retrieved IDs.")
             return
 
+        st.write("Step 4: Computing similarities and finding the most relevant contexts...")
         # Stack embeddings and compute similarity
         filtered_embeddings = np.vstack(filtered_embeddings)
         faiss.normalize_L2(filtered_embeddings)
@@ -96,9 +101,10 @@ class QAMixPipeline:
             text = metadata_entry.get("text", "Text not found")
             review_id = metadata_entry.get("id", "ID not found")
             context_text += f"Text: {text}\n\n"
-        
+
+        st.write("Step 5: Generating final response...")
         # Generate the final prompt
-        prompt = f"Using the following context:\n{context_text}\nAnswer the question for our spotify management team:\nQuestion: {user_question}"
+        prompt = f"Using the following context:\n{context_text}\nAnswer the question for our Spotify management team:\nQuestion: {user_question}"
         logging.info("Prompt generated:\n%s", prompt)
 
         # Generate response using the chosen agent

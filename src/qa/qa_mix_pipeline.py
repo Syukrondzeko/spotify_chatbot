@@ -98,7 +98,7 @@ class QAMixPipeline:
             context_text += f"Text: {text}\n\n"
         
         # Generate the final prompt
-        prompt = f"Using the following context:\n{context_text}\nAnswer the question:\nQuestion: {user_question}"
+        prompt = f"Using the following context:\n{context_text}\nAnswer the question for our spotify management team:\nQuestion: {user_question}"
         logging.info("Prompt generated:\n%s", prompt)
 
         # Generate response using the chosen agent

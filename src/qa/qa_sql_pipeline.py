@@ -45,7 +45,7 @@ class QASQLPipeline:
 
         prompt = f"""From this query:\n{sql_query}\n
         We got result:\n {context_text}
-        \nAnswer this question based on the result above to make comprehensive but not verbose answer for user:\nQuestion: {user_question}
+        \nAnswer this question based on the result above to make comprehensive but not verbose answer for our spotify management team:\nQuestion: {user_question}
         """
         logging.info("Prompt generated:\n%s", prompt)
 

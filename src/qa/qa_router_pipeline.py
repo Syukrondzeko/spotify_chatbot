@@ -10,7 +10,7 @@ from qa.router.task_router import router_question, post_processing_router
 from qa.qa_sql_pipeline import QASQLPipeline
 from qa.qa_mix_pipeline import QAMixPipeline
 from qa.qa_faiss_pipeline import QAFaissPipeline
-from qa.context_retrieval.faiss.faiss_agent import FaissAgent
+import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()

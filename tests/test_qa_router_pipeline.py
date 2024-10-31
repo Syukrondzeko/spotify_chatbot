@@ -32,15 +32,11 @@ faiss_index = faiss.read_index(FAISS_PATH)
 logging.info("Loading metadata...")
 with open(METADATA_FAISS_PATH, "r") as f:
     metadata = json.load(f)
-
-# Create a metadata map for quick access by faiss_index
-metadata_map = {entry['faiss_index']: entry for entry in metadata}
-
-# Initialize RouterPipeline with loaded components
-router_pipeline = RouterPipeline(model, faiss_index, metadata_map)
+    
+router_pipeline = RouterPipeline(model, faiss_index, metadata)
 
 # Define a single test question and agent type
-question = "How many negative sentiment for our product?"
+question = "In comparison to our application, which music streaming platform are users most likely to compare ours with"
 agent_type = "cohere"
 
 # Route the question using RouterPipeline and output the result

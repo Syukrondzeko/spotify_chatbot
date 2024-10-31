@@ -36,7 +36,7 @@ logging.info("FAISS resources loaded successfully for testing.")
 pipeline = QAFaissPipeline(model=model, index=index, metadata=metadata)
 
 # Define a test question
-question = "How many negative sentiment for our product?"
+question = "In comparison to our application, which music streaming platform are users most likely to compare ours with"
 agent_type = "gemini"  # Choose from "cohere", "llama", or "gemini"
 
 # Run the pipeline

@@ -43,7 +43,7 @@ class QAFaissPipeline:
         context_text = "\n".join(context)
         logging.info("FAISS context retrieved and formatted.")
 
-        prompt = f"Using the following context:\nContext: {context_text}\nAnswer the question:\nQuestion: {user_question}"
+        prompt = f"Using the following context:\nContext: {context_text}\nAnswer this question for our spotify management team:\nQuestion: {user_question}"
         logging.info("Prompt generated:\n%s", prompt)
 
         response = self.generate_response(agent_type, prompt)

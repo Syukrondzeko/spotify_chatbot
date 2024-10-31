@@ -1,5 +1,3 @@
-# qa/context_retrieval/faiss/faiss_agent.py
-
 import faiss
 import numpy as np
 import json
@@ -7,6 +5,10 @@ import logging
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 import os
+import logging
+logging.basicConfig(level=logging.INFO)
+logging.info("faiss_agent.py has been loaded.")
+
 
 # Load environment variables
 load_dotenv()

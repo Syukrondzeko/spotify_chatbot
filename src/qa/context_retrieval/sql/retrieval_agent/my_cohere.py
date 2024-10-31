@@ -9,8 +9,11 @@ class CohereQueryRetriever(AgentBase):
         super().__init__(api_key)
         self.client = cohere.ClientV2(api_key=api_key)
 
-    def get_query(self, user_question):
-        prompt = self.build_query(user_question)
+    def get_query(self, user_question, query_type):
+        if query_type == 'filtering':
+            prompt = self.build_filter_query(user_question)
+        elif query_type == 'aggregating':
+            prompt = self.build_aggregate_query(user_question)
         response = self.client.chat(model="command-r-plus-08-2024", messages=[{"role": "user", "content": prompt}])
         return response.message.content[0].text
 

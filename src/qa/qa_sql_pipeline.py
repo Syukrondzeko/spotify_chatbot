@@ -4,14 +4,17 @@ from qa.qa_pipeline_base import QAPipelineBase
 from qa.context_retrieval.retrieval_pipeline import retrieve_and_execute_pipeline
 
 class QASQLPipeline(QAPipelineBase):
-    def retrieve_context(self, user_question: str, agent_type: str):
+    def retrieve_context(self, user_question: str, query_type: str, agent_type: str):
         """Retrieve context using SQL-based retrieval."""
-        return retrieve_and_execute_pipeline(user_question, agent_type)
+        if query_type != "aggregating":
+            raise ValueError("Invalid query_type. Only 'aggregating' is accepted in QASQLPipeline.")
+        
+        return retrieve_and_execute_pipeline(user_question, query_type, agent_type)
 
-    def answer_question(self, user_question: str, agent_type: str = "cohere") -> str:
+    def answer_question(self, user_question: str, query_type: str, agent_type: str = "cohere") -> str:
         """Retrieves SQL context and generates a response."""
         logging.info("Retrieving context for the question using SQL.")
-        context = self.retrieve_context(user_question, agent_type)
+        context = self.retrieve_context(user_question, query_type, agent_type)
 
         if context is None or (isinstance(context, pd.DataFrame) and context.empty):
             logging.warning("No context found.")
@@ -30,7 +33,8 @@ class QASQLPipeline(QAPipelineBase):
 # Example usage
 if __name__ == "__main__":
     pipeline = QASQLPipeline()
-    question = "How many comments for each month in 2014?"
+    question = "What features that user doesnt like max 5?"
+    query_type = "aggregating"
     agent = "cohere"  # Options: "cohere", "llama", "gemini"
-    answer = pipeline.answer_question(question, agent_type=agent)
+    answer = pipeline.answer_question(question, query_type, agent)
     print("Answer:", answer if answer else "No answer generated.")

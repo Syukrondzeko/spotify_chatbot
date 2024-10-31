@@ -12,8 +12,11 @@ class LlamaQueryRetriever(AgentBase):
         self.api_url = api_key
         self.ollama_model = "llama3.2"
 
-    def get_query(self, user_question):
-        prompt = self.build_query(user_question)
+    def get_query(self, user_question, query_type):
+        if query_type == 'filtering':
+            prompt = self.build_filter_query(user_question)
+        elif query_type == 'aggregating':
+            prompt = self.build_aggregate_query(user_question)
         payload = {"model": self.ollama_model, "prompt": prompt}
         headers = {"Content-Type": "application/json"}
         return self._send_request(payload, headers)

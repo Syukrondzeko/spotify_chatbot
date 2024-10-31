@@ -9,8 +9,11 @@ class GeminiQueryRetriever(AgentBase):
         super().__init__(api_key)
         self.api_url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}'
 
-    def get_query(self, user_question):
-        prompt = self.build_query(user_question)
+    def get_query(self, user_question, query_type):
+        if query_type == 'filtering':
+            prompt = self.build_filter_query(user_question)
+        elif query_type == 'aggregating':
+            prompt = self.build_aggregate_query(user_question)
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
         headers = {"Content-Type": "application/json"}
         return self._send_request(payload, headers)

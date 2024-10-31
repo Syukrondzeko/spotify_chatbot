@@ -15,7 +15,7 @@ load_dotenv()
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def retrieve_and_execute_pipeline(user_question, agent_type="cohere"):
+def retrieve_and_execute_pipeline(user_question, query_type, agent_type="cohere"):
     # Initialize the appropriate agent based on agent_type
     api_key = os.getenv("COHERE_API") if agent_type == "cohere" else os.getenv("GEMINI_API_KEY") if agent_type == "gemini" else os.getenv("LLAMA_API")
     
@@ -29,7 +29,7 @@ def retrieve_and_execute_pipeline(user_question, agent_type="cohere"):
         raise ValueError(f"Unsupported agent_type: {agent_type}")
 
     # Step 1: Get raw output from agent
-    raw_response = retriever.get_query(user_question)
+    raw_response = retriever.get_query(user_question, query_type)
     logging.info("Step 1 - Raw Output from Agent Retriever:\n%s", raw_response)
 
     # Step 2: Clean SQL extraction
@@ -79,5 +79,6 @@ def retrieve_and_execute_pipeline(user_question, agent_type="cohere"):
 # Example usage
 if __name__ == "__main__":
     user_question = "What is the dissatisfaction in the august 2014?"
+    query_type = "aggregating"
     agent_type = "cohere"  # Change this to "llama" or "gemini" as needed
-    retrieve_and_execute_pipeline(user_question, agent_type)
+    retrieve_and_execute_pipeline(user_question, query_type, agent_type)

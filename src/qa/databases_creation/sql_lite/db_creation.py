@@ -15,8 +15,18 @@ def remove_emojis(text):
     """Remove emojis and special characters from text."""
     return re.sub(r'[^\w\s,]', '', text)
 
+def assign_sentiment(rating):
+    """Assign sentiment based on review rating."""
+    if rating in [1, 2]:
+        return 'negative'
+    elif rating == 3:
+        return 'neutral'
+    elif rating in [4, 5]:
+        return 'positive'
+    return 'unknown'  # in case of missing or unusual rating values
+
 def preprocess_text(df):
-    """Apply uniform preprocessing: remove emojis, filter text length, and extract date components."""
+    """Apply uniform preprocessing: remove emojis, filter text length, add sentiment, and extract date components."""
     logging.info("Starting text preprocessing")
 
     # Rename 'Unnamed: 0' to 'id' if it exists
@@ -41,8 +51,11 @@ def preprocess_text(df):
     df['month'] = df['review_timestamp'].dt.month
     df['day'] = df['review_timestamp'].dt.day
 
+    # Assign sentiment based on review rating
+    df['sentiment'] = df['review_rating'].apply(assign_sentiment)
+
     # Drop unnecessary columns
-    df = df.drop(columns=['author_app_version', 'review_timestamp'])
+    df = df.drop(columns=['author_app_version', 'review_timestamp', 'author_name', 'review_likes'])
 
     logging.info("Text preprocessing completed")
     return df
@@ -62,16 +75,15 @@ df_filtered = preprocess_text(df)
 conn = sqlite3.connect(database_path)
 cursor = conn.cursor()
 
-# Create the user_review table with cleaned text under review_text and date components
+# Create the user_review table with cleaned text under review_text, sentiment, and date components
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS user_review (
         id INTEGER PRIMARY KEY,
         pseudo_author_id TEXT,
         review_id TEXT,
-        author_name TEXT,
         review_text TEXT,
         review_rating INTEGER,
-        review_likes INTEGER,
+        sentiment TEXT,
         year INTEGER,
         month INTEGER,
         day INTEGER

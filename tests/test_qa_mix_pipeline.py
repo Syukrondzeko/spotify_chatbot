@@ -47,4 +47,10 @@ agent_type = "cohere"  # Options: "cohere", "llama", or "gemini"
 
 # Run the pipeline
 logging.info(f"Processing question: '{question}' with agent type: '{agent_type}'")
-pipeline.answer_question(question, query_type=query_type, agent_type=agent_type)
+response = pipeline.answer_question(
+    user_question="What are the most mentioned features?",
+    query_type="filtering",
+    agent_type="gemini",
+    top_k=3  # Retrieve top 3 similar reviews
+)
+print("Generated Response:", response)

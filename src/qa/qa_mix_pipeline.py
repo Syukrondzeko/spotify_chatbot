@@ -26,16 +26,30 @@ cohere_client = cohere.ClientV2(api_key=COHERE_API_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class QAMixPipeline:
+    def __init__(self, model, faiss_index, metadata_by_id):
+        """
+        Initialize QAMixPipeline with model, FAISS index, and metadata.
+        
+        Args:
+        - model: The embedding model (e.g., SentenceTransformer).
+        - faiss_index: The FAISS index for similarity search.
+        - metadata_by_id: A dictionary mapping FAISS index entries to metadata.
+        """
+        self.model = model
+        self.faiss_index = faiss_index
+        self.metadata_by_id = metadata_by_id
+        logging.info("QAMixPipeline initialized with model, FAISS index, and metadata.")
+
     def retrieve_context(self, user_question: str, query_type: str, agent_type: str):
         """Retrieve context using SQL-based retrieval."""
         if query_type != "filtering":
             raise ValueError("Invalid query_type. Only 'filtering' is accepted in QAMixPipeline.")
         
-        # This function should call `retrieve_and_execute_pipeline`, assuming it’s defined elsewhere.
+        # This function should call retrieve_and_execute_pipeline, assuming it’s defined elsewhere.
         return retrieve_and_execute_pipeline(user_question, query_type, agent_type)
 
-    def answer_question(self, user_question: str, query_type: str, agent_type: str = "cohere"):
-        """Retrieves SQL context, filters FAISS embeddings, and performs similarity search."""
+    def answer_question(self, user_question: str, query_type: str, agent_type: str = "cohere", top_k: int = 5):
+        """Retrieves SQL context, filters FAISS embeddings, performs similarity search, and generates a response."""
         sql_query, context = self.retrieve_context(user_question, query_type, agent_type)
         logging.info(f"Retrieving context for the question using SQL:\n{sql_query}")
 
@@ -50,7 +64,7 @@ class QAMixPipeline:
         question_embedding = self.model.encode(user_question).astype('float32').reshape(1, -1)
         faiss.normalize_L2(question_embedding)
 
-        # Filter FAISS indices to only include those in `context` and retrieve relevant embeddings
+        # Filter FAISS indices to only include those in context and retrieve relevant embeddings
         context_ids = set(context['id'])
         filtered_embeddings = []
         metadata_map = []
@@ -71,17 +85,25 @@ class QAMixPipeline:
         faiss.normalize_L2(filtered_embeddings)
         similarities = np.dot(filtered_embeddings, question_embedding.T).flatten()
 
-        # Sort by similarity and get top 5 results
-        top_indices = np.argsort(similarities)[-5:][::-1]
+        # Sort by similarity and get top_k results
+        top_indices = np.argsort(similarities)[-top_k:][::-1]
         
-        print(f"Total reviews retrieved: {len(context)}")
-        print("Top 5 most similar reviews:")
-        for rank, idx in enumerate(top_indices, start=1):
+        # Format the top_k results into a context string for the prompt
+        context_text = ""
+        for idx in top_indices:
             similarity_score = similarities[idx]
             metadata_entry = metadata_map[idx]
             text = metadata_entry.get("text", "Text not found")
             review_id = metadata_entry.get("id", "ID not found")
-            print(f"Rank {rank}: Text: {text}, ID: {review_id}, Similarity Score: {similarity_score:.4f}")
+            context_text += f"Text: {text}\n\n"
+        
+        # Generate the final prompt
+        prompt = f"Using the following context:\n{context_text}\nAnswer the question:\nQuestion: {user_question}"
+        logging.info("Prompt generated:\n%s", prompt)
+
+        # Generate response using the chosen agent
+        response = self.generate_response(agent_type, prompt)
+        return response
 
     def generate_response(self, agent_type: str, prompt: str) -> str:
         """Generates a response based on the agent type and prompt."""

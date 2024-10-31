@@ -30,7 +30,7 @@ class QAFaissPipeline:
             nprobe=nprobe
         )
 
-    def answer_question(self, user_question: str, top_k:int, nprobe:int, agent_type: str = "cohere") -> str:
+    def answer_question(self, user_question: str, top_k:int =5, nprobe:int = 10, agent_type: str = "cohere") -> str:
         """Retrieves FAISS context and generates a response."""
         logging.info("Retrieving context for the question using FAISS.")
         context = self.retrieve_context(user_question, top_k, nprobe)

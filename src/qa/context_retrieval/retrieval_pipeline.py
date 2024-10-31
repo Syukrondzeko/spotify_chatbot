@@ -55,10 +55,11 @@ def retrieve_and_execute_pipeline(user_question, query_type, agent_type="cohere"
                 if relaxed_query:
                     relaxed_results_df = run_query(relaxed_query)
                     logging.info("Step 4 - Data Retrieved from Relaxed Query:\n%s", relaxed_results_df)
+                    return clean_query, relaxed_results_df
                 else:
                     logging.warning("No valid relaxed SQL query was generated.")
             else:
-                return query_result
+                return clean_query, query_result
         else:
             # If `query_result` is an error message, pass it to `solved_error_query`
             logging.error("Step 3 - Error Encountered:\n%s", query_result)
@@ -70,15 +71,9 @@ def retrieve_and_execute_pipeline(user_question, query_type, agent_type="cohere"
             if solved_query:
                 fixed_results_df = run_query(solved_query)
                 logging.info("Step 5 - Data Retrieved from Resolved Query:\n%s", fixed_results_df)
+                return clean_query, fixed_results_df
             else:
                 logging.warning("No valid resolved SQL query was generated.")
 
     else:
         logging.warning("No valid SQL query was extracted.")
-
-# Example usage
-if __name__ == "__main__":
-    user_question = "What is the dissatisfaction in the august 2014?"
-    query_type = "aggregating"
-    agent_type = "cohere"  # Change this to "llama" or "gemini" as needed
-    retrieve_and_execute_pipeline(user_question, query_type, agent_type)

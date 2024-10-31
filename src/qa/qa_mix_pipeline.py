@@ -1,49 +1,50 @@
+# src/qa/qa_mix_pipeline.py
+
 import logging
 import pandas as pd
-import json
 import numpy as np
 import faiss
-from sentence_transformers import SentenceTransformer
-from qa.qa_pipeline_base import QAPipelineBase
-from qa.context_retrieval.retrieval_pipeline import retrieve_and_execute_pipeline
-from dotenv import load_dotenv
+import requests
+import cohere
+import google.generativeai as genai
+import json
 import os
+from dotenv import load_dotenv
+from qa.context_retrieval.retrieval_pipeline import retrieve_and_execute_pipeline
 
 # Load environment variables
 load_dotenv()
-METADATA_FAISS_PATH = os.getenv("METADATA_FAISS_PATH")
-FAISS_PATH = os.getenv("FAISS_PATH")
-EMBEDDING_MODEL_PATH = os.getenv("EMBEDDING_MODEL_PATH")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+COHERE_API_KEY = os.getenv("COHERE_API_KEY")
+LLAMA_API = os.getenv("LLAMA_API")
 
-class QAMixPipeline(QAPipelineBase):
-    def __init__(self):
-        # Load FAISS index
-        self.faiss_index = faiss.read_index(FAISS_PATH)
-        logging.info("FAISS index loaded successfully.")
-        self.model = SentenceTransformer(EMBEDDING_MODEL_PATH)
-        
-        # Load metadata JSON file and create a mapping from FAISS index to metadata entry
-        with open(METADATA_FAISS_PATH, 'r') as f:
-            metadata = json.load(f)
-        self.metadata_by_id = {entry['id']: entry for entry in metadata}
-        logging.info("Metadata loaded successfully.")
+# Initialize models
+genai.configure(api_key=GEMINI_API_KEY)
+cohere_client = cohere.ClientV2(api_key=COHERE_API_KEY)
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class QAMixPipeline:
     def retrieve_context(self, user_question: str, query_type: str, agent_type: str):
         """Retrieve context using SQL-based retrieval."""
         if query_type != "filtering":
             raise ValueError("Invalid query_type. Only 'filtering' is accepted in QAMixPipeline.")
         
+        # This function should call `retrieve_and_execute_pipeline`, assuming it’s defined elsewhere.
         return retrieve_and_execute_pipeline(user_question, query_type, agent_type)
 
     def answer_question(self, user_question: str, query_type: str, agent_type: str = "cohere"):
         """Retrieves SQL context, filters FAISS embeddings, and performs similarity search."""
-        logging.info("Retrieving context for the question using SQL.")
-        context = self.retrieve_context(user_question, query_type, agent_type)
+        sql_query, context = self.retrieve_context(user_question, query_type, agent_type)
+        logging.info(f"Retrieving context for the question using SQL:\n{sql_query}")
 
         if context is None or (isinstance(context, pd.DataFrame) and context.empty):
             logging.warning("No context found.")
             print("No context found.")
             return
+        
+        logging.info(f"Context:\n{context}")
 
         # Embed the user question
         question_embedding = self.model.encode(user_question).astype('float32').reshape(1, -1)
@@ -81,3 +82,37 @@ class QAMixPipeline(QAPipelineBase):
             text = metadata_entry.get("text", "Text not found")
             review_id = metadata_entry.get("id", "ID not found")
             print(f"Rank {rank}: Text: {text}, ID: {review_id}, Similarity Score: {similarity_score:.4f}")
+
+    def generate_response(self, agent_type: str, prompt: str) -> str:
+        """Generates a response based on the agent type and prompt."""
+        if agent_type == "cohere":
+            response = cohere_client.chat(
+                model="command-r-plus-08-2024", messages=[{"role": "user", "content": prompt}]
+            )
+            return response.message.content[0].text if response.message else None
+        elif agent_type == "llama":
+            payload = {"model": "llama3.2", "prompt": prompt}
+            headers = {"Content-Type": "application/json"}
+            return self._send_request(payload, headers)
+        elif agent_type == "gemini":
+            response = genai.GenerativeModel("gemini-1.5-flash").generate_content(prompt)
+            return response.text if response else None
+        else:
+            raise ValueError(f"Unsupported agent type: {agent_type}")
+
+    def _send_request(self, payload, headers):
+        """Sends a request to the Llama API and processes the streaming response."""
+        response = requests.post(LLAMA_API, json=payload, headers=headers, stream=True)
+        if response.status_code == 200:
+            query_result = ""
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        line_data = json.loads(line.decode("utf-8"))
+                        query_result += line_data.get("response", "")
+                    except json.JSONDecodeError:
+                        logging.warning("Could not decode line as JSON")
+            return query_result
+        else:
+            logging.error(f"Error: {response.status_code}")
+            return None

@@ -4,7 +4,7 @@ import requests
 import cohere
 import google.generativeai as genai
 from dotenv import load_dotenv
-from abc import ABC, abstractmethod
+from abc import ABC
 import json
 
 # Load environment variables
@@ -54,8 +54,3 @@ class QAPipelineBase(ABC):
             return response.text if response else None
         else:
             raise ValueError(f"Unsupported agent type: {agent_type}")
-
-    @abstractmethod
-    def retrieve_context(self, user_question: str):
-        """Abstract method to retrieve context, to be implemented by subclasses."""
-        pass

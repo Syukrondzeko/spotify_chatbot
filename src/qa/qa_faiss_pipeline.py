@@ -30,11 +30,3 @@ class QAFaissPipeline(QAPipelineBase):
 
         response = self.generate_response(agent_type, prompt)
         return response
-
-# Example usage
-if __name__ == "__main__":
-    pipeline = QAFaissPipeline()
-    question = "What is the best feature in Spotify?"
-    agent = "gemini"  # Options: "cohere", "llama", "gemini"
-    answer = pipeline.answer_question(question, agent_type=agent)
-    print("Answer:", answer if answer else "No answer generated.")

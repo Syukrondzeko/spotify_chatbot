@@ -81,12 +81,3 @@ class QAMixPipeline(QAPipelineBase):
             text = metadata_entry.get("text", "Text not found")
             review_id = metadata_entry.get("id", "ID not found")
             print(f"Rank {rank}: Text: {text}, ID: {review_id}, Similarity Score: {similarity_score:.4f}")
-
-
-# Example usage
-if __name__ == "__main__":
-    pipeline = QAMixPipeline()
-    question = "What features that has many bad review? limit max 5 rows"
-    query_type = "filtering"
-    agent = "cohere"  # Options: "cohere", "llama", "gemini"
-    pipeline.answer_question(question, query_type, agent)

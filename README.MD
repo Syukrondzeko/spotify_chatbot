@@ -108,7 +108,11 @@ This pipeline addresses questions that require data aggregation rather than retr
 
 ## Usage
 
+![Chatbot User Interface](images/UI.png)
+
 1. **Ask Questions**: Users can ask questions directly in the interface, and the chatbot will route each question to the appropriate pipeline for processing.
 2. **Review Insights**: The chatbot responds with insights from the review data, filtered and summarized according to user queries.
+
+For video demonstration, you can go to here: [Video](https://drive.google.com/file/d/1jMYPQAhPeSWCX0krsrrp3otPYqlQgGNo/view?usp=sharing)
 
 
